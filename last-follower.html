@@ -208,13 +208,10 @@ document.addEventListener('onLoad', function(obj) {
 
 window.addEventListener('load', function() {
   widget.classList.add('visible');
-  // Intentar obtener último seguidor via API pública de Twitch
-  fetch('https://decapi.me/twitch/followers/aleqx_x?count=1')
-    .then(function(r) { return r.text(); })
-    .then(function(name) {
-      if (name && name.trim() && !name.includes('error')) {
-        nameEl.textContent = name.trim();
-      }
+  fetch('https://api.streamelements.com/kappa/v2/channels/aleqx_x/subscribers/latest')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d && d.username) nameEl.textContent = d.username;
     })
     .catch(function() {});
 });

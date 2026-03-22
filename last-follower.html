@@ -158,7 +158,7 @@
     <div class="suit-icon">♠</div>
     <div class="info">
       <div class="label">Último seguidor</div>
-      <div class="follower-name" id="name">—</div>
+      <div class="follower-name" id="name">Esperando...</div>
     </div>
   </div>
 </div>
@@ -198,7 +198,6 @@ document.addEventListener('onEventReceived', function(obj) {
 });
 
 document.addEventListener('onLoad', function(obj) {
-  // Cargar último seguidor si Streamlabs lo pasa en los datos
   try {
     var d = obj && obj.detail ? obj.detail : {};
     if (d.lastFollower) setFollower(d.lastFollower);
@@ -206,6 +205,10 @@ document.addEventListener('onLoad', function(obj) {
   } catch(e) {
     widget.classList.add('visible');
   }
+});
+
+window.addEventListener('load', function() {
+  widget.classList.add('visible');
 });
 
 // Test

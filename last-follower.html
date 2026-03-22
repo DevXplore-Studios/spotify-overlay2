@@ -208,6 +208,15 @@ document.addEventListener('onLoad', function(obj) {
 
 window.addEventListener('load', function() {
   widget.classList.add('visible');
+  // Intentar obtener último seguidor via API pública de Twitch
+  fetch('https://decapi.me/twitch/followers/aleqx_x?count=1')
+    .then(function(r) { return r.text(); })
+    .then(function(name) {
+      if (name && name.trim() && !name.includes('error')) {
+        nameEl.textContent = name.trim();
+      }
+    })
+    .catch(function() {});
 });
 
 // Test

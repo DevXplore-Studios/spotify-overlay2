@@ -32,76 +32,82 @@
     transform: translateY(0) scale(1);
   }
 
-  /* ─── OUTER GLOW (color dinámico via JS) ──────────── */
-  .glow-ring {
-    position: absolute;
-    inset: -1px;
-    border-radius: 19px;
-    background: var(--accent, #1DB954);
-    opacity: 0.18;
-    filter: blur(14px);
-    z-index: 0;
-    transition: background 1.2s ease, opacity 0.4s;
-  }
-  .widget:not(.playing) .glow-ring { opacity: 0.06; }
 
-  /* ─── GLASS CARD ────────────────────────────────────── */
+
+  /* ─── GLASS CARD estilo carta de póker ─── */
   .inner {
     position: relative;
     z-index: 1;
-    background: rgba(10, 10, 14, 1);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-top-color: rgba(255,255,255,0.18);
-    border-left-color: rgba(255,255,255,0.13);
-    border-radius: 18px;
-    padding: 14px 16px 14px 14px;
+    background: rgba(18, 18, 20, 1);
+    border: 1.5px solid rgba(255,255,255,0.10);
+    border-top-color: rgba(255,255,255,0.16);
+    border-radius: 14px;
+    padding: 12px 18px 12px 12px;
     display: flex;
-    gap: 13px;
+    gap: 16px;
     align-items: center;
     box-shadow:
-      0 2px 0 rgba(255,255,255,0.07) inset,
-      0 0 0 1px rgba(0,0,0,0.4),
-      0 16px 48px rgba(0,0,0,0.55),
-      0 4px 12px rgba(0,0,0,0.3);
+      0 2px 0 rgba(255,255,255,0.05) inset,
+      0 20px 60px rgba(0,0,0,0.6),
+      0 4px 16px rgba(0,0,0,0.4);
     overflow: hidden;
   }
 
-  /* Subtle noise texture overlay */
+  /* Patrón diagonal estilo carta */
   .inner::before {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 18px;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.025;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.012) 0px,
+      rgba(255,255,255,0.012) 1px,
+      transparent 1px,
+      transparent 10px
+    );
     pointer-events: none;
     z-index: 0;
   }
 
-  /* Accent color strip at the top */
+  /* Top highlight */
   .inner::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent, #1DB954) 40%, transparent);
-    opacity: 0.6;
-    transition: background 1.2s ease;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14) 40%, transparent);
   }
+
+  /* ─── ESQUINAS PÓKER ─── */
+  .corner {
+    position: absolute;
+    font-size: 11px;
+    line-height: 1;
+    color: rgba(255,255,255,0.18);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .corner .suit { font-size: 9px; }
+  .corner.tl { top: 7px; left: 10px; }
+  .corner.br { bottom: 7px; right: 10px; transform: rotate(180deg); }
 
   /* ─── ALBUM ART ─────────────────────────────────────── */
   .art-wrap {
     flex-shrink: 0;
-    width: 62px;
-    height: 62px;
-    border-radius: 10px;
+    width: 58px;
+    height: 58px;
+    border-radius: 8px;
     overflow: hidden;
     background: #1a1a20;
     position: relative;
     z-index: 1;
-    box-shadow:
-      0 4px 16px rgba(0,0,0,0.5),
-      0 0 0 1px rgba(255,255,255,0.07);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     transition: transform 0.4s cubic-bezier(.22,1,.36,1);
   }
 
@@ -142,16 +148,16 @@
     font-size: 9px;
     letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: var(--accent, #1DB954);
+    color: rgba(255,255,255,0.38);
     font-weight: 600;
     display: flex;
     align-items: center;
     gap: 5px;
     font-family: 'Outfit', sans-serif;
-    transition: color 1.2s ease;
   }
 
-  .widget:not(.playing) .label { color: rgba(255,255,255,0.28); }
+  .widget.playing .label { color: rgba(255,255,255,0.55); }
+  .widget:not(.playing) .label { color: rgba(255,255,255,0.25); }
 
   /* ─── EQUALIZER BARS ────────────────────────────────── */
   .eq {
@@ -164,8 +170,7 @@
   .eq-bar {
     width: 3px;
     border-radius: 2px;
-    background: var(--accent, #1DB954);
-    transition: background 1.2s ease;
+    background: rgba(255,255,255,0.5);
     transform-origin: bottom;
   }
 
@@ -188,8 +193,8 @@
   /* ─── TITLE ─────────────────────────────────────────── */
   .title-wrap {
     overflow: hidden;
-    mask-image: linear-gradient(90deg, transparent 0px, #000 8px, #000 calc(100% - 20px), transparent 100%);
-    -webkit-mask-image: linear-gradient(90deg, transparent 0px, #000 8px, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0px, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 0px, #000 calc(100% - 24px), transparent 100%);
   }
 
   .title {
@@ -255,7 +260,7 @@
   .fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--accent, #1DB954), color-mix(in srgb, var(--accent, #1DB954) 70%, #fff));
+    background: rgba(255,255,255,0.85);
     border-radius: 10px;
     transition: width 1s linear;
     position: relative;
@@ -268,16 +273,13 @@
     right: -3px;
     top: 50%;
     transform: translateY(-50%);
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: #fff;
-    box-shadow:
-      0 0 0 2px rgba(255,255,255,0.15),
-      0 0 8px var(--accent, #1DB954),
-      0 0 16px var(--accent, #1DB954);
+    box-shadow: 0 0 4px rgba(255,255,255,0.6);
     opacity: 0;
-    transition: opacity 0.3s, box-shadow 1.2s ease;
+    transition: opacity 0.3s;
   }
 
   .widget.playing .fill::after { opacity: 1; }
@@ -321,8 +323,9 @@
 </div>
 
 <div class="widget" id="widget">
-  <div class="glow-ring" id="glowRing"></div>
   <div class="inner">
+    <div class="corner tl"><span>♠</span></div>
+    <div class="corner br"><span>♠</span></div>
     <div class="art-wrap">
       <img id="art" src="" alt="">
     </div>
@@ -353,7 +356,7 @@
 
 <script>
 const CLIENT_ID    = 'e19133bd7acf486d8d4adc5254f18509';
-const REDIRECT_URI = 'https://clever-starlight-9ac4cb.netlify.app';
+const REDIRECT_URI = 'https://devxplore-studios.github.io/spotify-overlay2/';
 const SCOPES       = 'user-read-currently-playing user-read-playback-state';
 
 function randomString(len) {
@@ -406,6 +409,15 @@ async function exchangeCode(code) {
   return r.json();
 }
 
+function clearTokens() {
+  localStorage.removeItem('sp_access');
+  localStorage.removeItem('sp_refresh');
+  localStorage.removeItem('sp_exp');
+  localStorage.removeItem('pkce_verifier');
+  widget.classList.remove('visible', 'playing');
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
 async function doRefresh() {
   const r = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
@@ -421,6 +433,9 @@ async function doRefresh() {
     localStorage.setItem('sp_access', d.access_token);
     localStorage.setItem('sp_exp', Date.now() + d.expires_in * 1000);
     if (d.refresh_token) localStorage.setItem('sp_refresh', d.refresh_token);
+  } else {
+    // Refresh token invalid or expired — force re-login
+    clearTokens();
   }
 }
 
@@ -437,7 +452,7 @@ const fillEl    = document.getElementById('fill');
 const elapsedEl = document.getElementById('elapsed');
 const durEl     = document.getElementById('duration');
 const statusEl  = document.getElementById('status');
-const glowRing  = document.getElementById('glowRing');
+const glowRing  = null;
 
 function fmt(ms) {
   const s = Math.floor(ms / 1000);
@@ -504,7 +519,7 @@ async function fetchNow() {
   } catch(e) { return; }
 
   if (r.status === 204) { widget.classList.remove('visible', 'playing'); return; }
-  if (r.status === 401) { await doRefresh(); return; }
+  if (r.status === 401) { clearTokens(); return; }
 
   const data = await r.json();
   if (!data || !data.item) { widget.classList.remove('visible', 'playing'); return; }
@@ -556,6 +571,10 @@ async function init() {
       localStorage.setItem('sp_access',  tokens.access_token);
       localStorage.setItem('sp_refresh', tokens.refresh_token);
       localStorage.setItem('sp_exp',     Date.now() + tokens.expires_in * 1000);
+    } else {
+      // Exchange failed (e.g. stale code), clear everything and show login
+      clearTokens();
+      return;
     }
   }
 

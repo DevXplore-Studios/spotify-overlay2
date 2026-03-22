@@ -151,7 +151,7 @@
 </head>
 <body>
 
-<div class="widget" id="widget">
+<div class="widget visible" id="widget">
   <div class="inner">
     <div class="corner tl"><span>♠</span></div>
     <div class="corner br"><span>♠</span></div>
@@ -190,7 +190,7 @@ document.addEventListener('onEventReceived', function(obj) {
   var detail  = obj.detail;
   var type    = (detail.type || '').toLowerCase();
   var payload = detail.payload || {};
-  var name    = detail.name || payload.name || 'Anónimo';
+  var name    = detail.name || payload.name || detail.from || payload.from || 'Anónimo';
 
   if (type === 'follow') {
     setFollower(name);

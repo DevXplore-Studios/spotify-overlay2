@@ -3,315 +3,375 @@
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html, body {
-    width: 100%; height: 100%;
-    overflow: hidden;
+  body {
     background: transparent;
-    font-family: 'Outfit', sans-serif;
-  }
-
-  #stage {
-    width: 100%; height: 100%;
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 999;
-  }
-
-  /* ─── OVERLAY NEGRO ─── */
-  #curtain {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 998;
-    transition: none;
-  }
-
-  /* ─── CARTA ─── */
-  .card {
-    position: absolute;
-    border-radius: 10px;
-    background: #0d0d10;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    opacity: 0;
-    will-change: transform, opacity;
+    align-items: flex-end;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 40px;
+    font-family: 'DM Mono', monospace;
   }
 
-  .card::before {
+  .widget {
+    width: 360px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .widget.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .inner {
+    background: rgba(8, 8, 10, 0.82);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .art-wrap {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .art-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.4s ease;
+  }
+
+  .info { flex: 1; min-width: 0; }
+
+  .label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #1DB954;
+    margin-bottom: 5px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #1DB954;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.5; }
+  }
+
+  .widget:not(.playing) .dot { animation: none; opacity: 0.3; }
+  .widget:not(.playing) .label { color: rgba(255,255,255,0.3); }
+
+  .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+  }
+
+  .artist {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .time {
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+  }
+
+  .bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .fill {
+    height: 100%;
+    width: 0%;
+    background: #1DB954;
+    border-radius: 10px;
+    transition: width 1s linear;
+    position: relative;
+  }
+
+  .fill::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      45deg,
-      rgba(255,255,255,0.018) 0px,
-      rgba(255,255,255,0.018) 1px,
-      transparent 1px,
-      transparent 8px
-    );
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(29,185,84,0.8);
+    opacity: 0;
+    transition: opacity 0.3s;
   }
 
-  .card-inner {
-    position: relative;
-    z-index: 1;
-    width: 100%; height: 100%;
+  .widget.playing .fill::after { opacity: 1; }
+
+  #login-screen {
+    position: fixed;
+    inset: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
 
-  .card-suit {
-    line-height: 1;
-    filter: drop-shadow(0 0 14px currentColor);
+  #login-screen button {
+    font-family: 'DM Mono', monospace;
+    background: #1DB954;
+    color: #000;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.15s, background 0.15s;
   }
 
-  .card-rank {
-    position: absolute;
-    font-weight: 800;
-    line-height: 1;
-    z-index: 1;
+  #login-screen button:hover {
+    background: #1ed760;
+    transform: scale(1.04);
   }
-  .card-rank.tl { top: 8%; left: 10%; }
-  .card-rank.br { bottom: 8%; right: 10%; transform: rotate(180deg); }
-
-  /* Borde interior */
-  .card-border {
-    position: absolute;
-    inset: 6%;
-    border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.05);
-    pointer-events: none;
-  }
-
-  /* ─── BARRIDO LATERAL ─── */
-  #sweep {
-    position: fixed;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    z-index: 997;
-    pointer-events: none;
-    background: linear-gradient(
-      105deg,
-      transparent 0%,
-      rgba(255,255,255,0.03) 45%,
-      rgba(255,255,255,0.07) 50%,
-      rgba(255,255,255,0.03) 55%,
-      transparent 100%
-    );
-  }
-
-  /* ─── LÍNEAS DE VELOCIDAD ─── */
-  .speed-line {
-    position: absolute;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transform-origin: left center;
-    opacity: 0;
-  }
-
 </style>
 </head>
 <body>
 
-<div id="curtain"></div>
-<div id="sweep"></div>
-<div id="stage"></div>
+<div id="login-screen" style="display:none">
+  <button onclick="login()">CONECTAR SPOTIFY</button>
+</div>
+
+<div class="widget" id="widget">
+  <div class="inner">
+    <div class="art-wrap">
+      <img id="art" src="" alt="">
+    </div>
+    <div class="info">
+      <div class="label"><span class="dot"></span><span id="status">SONANDO</span></div>
+      <div class="title" id="title">—</div>
+      <div class="artist" id="artist">—</div>
+      <div class="progress-row">
+        <span class="time" id="elapsed">0:00</span>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <span class="time" id="duration">0:00</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-const stage   = document.getElementById('stage');
-const curtain = document.getElementById('curtain');
-const sweep   = document.getElementById('sweep');
+const CLIENT_ID    = 'e19133bd7acf486d8d4adc5254f18509';
+const REDIRECT_URI = 'http://127.0.0.1:8888';
+const SCOPES       = 'user-read-currently-playing user-read-playback-state';
 
-const SUITS_DATA = [
-  { sym: '♠', color: '#ffffff', rank: 'A',  glow: 'rgba(255,255,255,0.4)' },
-  { sym: '♥', color: '#e05555', rank: 'K',  glow: 'rgba(224,85,85,0.5)' },
-  { sym: '♦', color: '#e05555', rank: 'Q',  glow: 'rgba(224,85,85,0.5)' },
-  { sym: '♣', color: '#ffffff', rank: 'J',  glow: 'rgba(255,255,255,0.4)' },
-  { sym: '♠', color: '#4fc3f7', rank: '10', glow: 'rgba(79,195,247,0.5)' },
-  { sym: '♥', color: '#ffd54f', rank: '9',  glow: 'rgba(255,213,79,0.5)' },
-  { sym: '♦', color: '#69f0ae', rank: '8',  glow: 'rgba(105,240,174,0.5)' },
-  { sym: '♣', color: '#ce93d8', rank: '7',  glow: 'rgba(206,147,216,0.5)' },
-  { sym: '♠', color: '#ff5252', rank: '6',  glow: 'rgba(255,82,82,0.5)' },
-  { sym: '♥', color: '#ffffff', rank: '5',  glow: 'rgba(255,255,255,0.4)' },
-];
+// ── PKCE ────────────────────────────────────────────────
+function randomString(len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  let s = '';
+  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
 
-function rnd(a, b) { return a + Math.random() * (b - a); }
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+async function sha256(plain) {
+  const enc = new TextEncoder().encode(plain);
+  return crypto.subtle.digest('SHA-256', enc);
+}
 
-function createCard(suit, size, x, y, rotStart, rotEnd, delay, duration, fallDist, fromSide) {
-  const card = document.createElement('div');
-  card.className = 'card';
+function base64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
-  card.style.cssText =
-    'width:' + size + 'px;' +
-    'height:' + (size * 1.4) + 'px;' +
-    'left:' + x + 'px;' +
-    'top:' + y + 'px;' +
-    'border: 1.5px solid rgba(255,255,255,0.09);' +
-    'border-top-color: rgba(255,255,255,0.17);' +
-    'box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 20px ' + suit.glow + ', 0 2px 0 rgba(255,255,255,0.05) inset;';
+async function generatePKCE() {
+  const verifier  = randomString(64);
+  const challenge = base64url(await sha256(verifier));
+  return { verifier, challenge };
+}
 
-  const rankSize  = Math.round(size * 0.14);
-  const suitSize  = Math.round(size * 0.42);
+// ── Auth ─────────────────────────────────────────────────
+async function login() {
+  const { verifier, challenge } = await generatePKCE();
+  localStorage.setItem('pkce_verifier', verifier);
+  const url = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
+    client_id:             CLIENT_ID,
+    response_type:         'code',
+    redirect_uri:          REDIRECT_URI,
+    scope:                 SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge:        challenge,
+  });
+  window.location.href = url;
+}
 
-  card.innerHTML =
-    '<div class="card-inner">' +
-      '<span class="card-rank tl" style="color:' + suit.color + ';font-size:' + rankSize + 'px">' + suit.rank + '</span>' +
-      '<span class="card-suit" style="color:' + suit.color + ';font-size:' + suitSize + 'px">' + suit.sym + '</span>' +
-      '<span class="card-rank br" style="color:' + suit.color + ';font-size:' + rankSize + 'px">' + suit.rank + '</span>' +
-    '</div>' +
-    '<div class="card-border"></div>';
+async function exchangeCode(code) {
+  const r = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'authorization_code',
+      code,
+      redirect_uri:  REDIRECT_URI,
+      client_id:     CLIENT_ID,
+      code_verifier: localStorage.getItem('pkce_verifier'),
+    }),
+  });
+  return r.json();
+}
 
-  stage.appendChild(card);
+async function doRefresh() {
+  const r = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: localStorage.getItem('sp_refresh'),
+      client_id:     CLIENT_ID,
+    }),
+  });
+  const d = await r.json();
+  if (d.access_token) {
+    localStorage.setItem('sp_access', d.access_token);
+    localStorage.setItem('sp_exp', Date.now() + d.expires_in * 1000);
+    if (d.refresh_token) localStorage.setItem('sp_refresh', d.refresh_token);
+  }
+}
 
-  // Animación con requestAnimationFrame
-  const startTime = performance.now() + delay;
-  let started = false;
+function isExpired() {
+  return Date.now() > (parseInt(localStorage.getItem('sp_exp')) || 0) - 60000;
+}
 
-  function animate(now) {
-    if (now < startTime) { requestAnimationFrame(animate); return; }
+// ── UI ───────────────────────────────────────────────────
+const widget    = document.getElementById('widget');
+const titleEl   = document.getElementById('title');
+const artistEl  = document.getElementById('artist');
+const artEl     = document.getElementById('art');
+const fillEl    = document.getElementById('fill');
+const elapsedEl = document.getElementById('elapsed');
+const durEl     = document.getElementById('duration');
+const statusEl  = document.getElementById('status');
 
-    if (!started) {
-      card.style.opacity = '1';
-      started = true;
+function fmt(ms) {
+  const s = Math.floor(ms / 1000);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+let lastId = null;
+
+async function fetchNow() {
+  if (isExpired()) await doRefresh();
+  let r;
+  try {
+    r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('sp_access') }
+    });
+  } catch(e) { return; }
+
+  if (r.status === 204 || r.status === 401) {
+    widget.classList.remove('visible', 'playing');
+    return;
+  }
+
+  const data = await r.json();
+  if (!data || !data.item) { widget.classList.remove('visible', 'playing'); return; }
+
+  const track    = data.item;
+  const playing  = data.is_playing;
+  const progress = data.progress_ms;
+  const total    = track.duration_ms;
+
+  titleEl.textContent   = track.name;
+  artistEl.textContent  = track.artists.map(a => a.name).join(', ');
+  elapsedEl.textContent = fmt(progress);
+  durEl.textContent     = fmt(total);
+  fillEl.style.width    = ((progress / total) * 100).toFixed(1) + '%';
+  statusEl.textContent  = playing ? 'SONANDO' : 'PAUSADO';
+
+  widget.classList.add('visible');
+  widget.classList.toggle('playing', playing);
+
+  if (track.id !== lastId) {
+    lastId = track.id;
+    const img = track.album.images[1] || track.album.images[0];
+    if (img) artEl.src = img.url;
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+
+  if (code) {
+    history.replaceState({}, '', window.location.pathname);
+    const tokens = await exchangeCode(code);
+    if (tokens.access_token) {
+      localStorage.setItem('sp_access',  tokens.access_token);
+      localStorage.setItem('sp_refresh', tokens.refresh_token);
+      localStorage.setItem('sp_exp',     Date.now() + tokens.expires_in * 1000);
     }
-
-    const elapsed = (now - startTime) / 1000;
-    const t = Math.min(elapsed / duration, 1);
-
-    // Easing
-    const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
-
-    // Posición Y con rebote
-    const fallProgress = ease;
-    const bounceT = Math.max(0, (t - 0.7) / 0.3);
-    const bounce  = Math.sin(bounceT * Math.PI) * 12 * (1 - bounceT);
-    const currentY = fallDist * fallProgress + bounce;
-
-    // Rotación
-    const rot = rotStart + (rotEnd - rotStart) * ease;
-
-    // Fade out al final
-    const opacity = t < 0.75 ? 1 : 1 - ((t - 0.75) / 0.25);
-
-    // Wobble lateral suave
-    const wobble = Math.sin(elapsed * 6) * 3 * (1 - t);
-
-    card.style.transform = 'translate(' + wobble + 'px,' + currentY + 'px) rotate(' + rot + 'deg)';
-    card.style.opacity   = String(Math.max(0, opacity));
-
-    if (t < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      card.remove();
-    }
   }
 
-  requestAnimationFrame(animate);
+  if (!localStorage.getItem('sp_access')) {
+    document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
+
+  fetchNow();
+  setInterval(fetchNow, 3000);
 }
 
-function spawnSpeedLines(count, duration) {
-  for (let i = 0; i < count; i++) {
-    const line  = document.createElement('div');
-    line.className = 'speed-line';
-    const y     = rnd(5, 95);
-    const w     = rnd(15, 45);
-    const delay = rnd(0, duration * 0.4) * 1000;
-    line.style.cssText =
-      'top:' + y + '%;' +
-      'left:' + rnd(-10, 60) + '%;' +
-      'width:' + w + '%;';
-    stage.appendChild(line);
-
-    setTimeout(function() {
-      line.style.transition = 'opacity ' + (duration * 0.3) + 's ease';
-      line.style.opacity    = '1';
-      setTimeout(function() {
-        line.style.opacity = '0';
-        setTimeout(function() { line.remove(); }, duration * 300);
-      }, duration * 400);
-    }, delay);
-  }
-}
-
-function runTransition() {
-  stage.innerHTML = '';
-
-  const DURATION   = 2.0;
-  const W          = window.innerWidth;
-  const H          = window.innerHeight;
-  const CARD_COUNT = 22;
-
-  // Cortina negra
-  curtain.style.transition = 'none';
-  curtain.style.opacity    = '0';
-  setTimeout(function() {
-    curtain.style.transition = 'opacity ' + (DURATION * 0.25) + 's ease';
-    curtain.style.opacity    = '0.7';
-    setTimeout(function() {
-      curtain.style.transition = 'opacity ' + (DURATION * 0.4) + 's ease';
-      curtain.style.opacity    = '0';
-    }, DURATION * 500);
-  }, 10);
-
-  // Barrido lateral
-  sweep.style.transition = 'none';
-  sweep.style.left       = '-100%';
-  setTimeout(function() {
-    sweep.style.transition = 'left ' + DURATION + 's cubic-bezier(.22,1,.36,1)';
-    sweep.style.left       = '200%';
-  }, 50);
-
-  // Líneas de velocidad
-  spawnSpeedLines(18, DURATION);
-
-  // Cartas — distribuidas en columnas con variación
-  for (let i = 0; i < CARD_COUNT; i++) {
-    const suit     = SUITS_DATA[i % SUITS_DATA.length];
-    const size     = Math.round(rnd(55, 110));
-    const col      = (i / CARD_COUNT);
-    const x        = col * W + rnd(-30, 30);
-    const y        = rnd(-size * 1.4 - 60, -size * 0.6);
-    const rotStart = rnd(-35, 35);
-    const rotEnd   = rnd(-20, 20);
-    const delay    = rnd(0, DURATION * 0.45) * 1000;
-    const dur      = rnd(DURATION * 0.6, DURATION * 0.85);
-    const fallDist = rnd(H * 0.35, H * 0.75);
-
-    createCard(suit, size, x, y, rotStart, rotEnd, delay, dur, fallDist, false);
-  }
-
-  // Limpiar
-  setTimeout(function() {
-    stage.innerHTML = '';
-    sweep.style.transition = 'none';
-    sweep.style.left = '-100%';
-  }, (DURATION + 0.8) * 1000);
-}
-
-// ─── STREAMLABS ──────────────────────────────────────────
-document.addEventListener('onEventReceived', function(obj) {
-  if (!obj || !obj.detail) return;
-  var type = (obj.detail.type || '').toLowerCase();
-  if (type === 'scene-switch' || type === 'sceneswitch' || type === 'scene_switch') {
-    runTransition();
-  }
-});
-
-document.addEventListener('onLoad', function() {});
-
-// Test: escribe runTransition() en consola
-window.runTransition = runTransition;
+init();
 </script>
 </body>
 </html>

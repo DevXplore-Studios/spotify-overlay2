@@ -310,6 +310,11 @@ document.addEventListener('onEventReceived', function(obj) {
 
 document.addEventListener('onLoad', function() {});
 
+// Atajo de teclado — pulsa F9 para disparar la transición
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F9') runTransition();
+});
+
 // Test: escribe runTransition() en consola
 window.runTransition = runTransition;
 </script>

@@ -310,13 +310,13 @@ document.addEventListener('onEventReceived', function(obj) {
 
 document.addEventListener('onLoad', function() {});
 
-// Atajo de teclado — pulsa F9 para disparar la transición
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'F9') runTransition();
-});
-
-// Test: escribe runTransition() en consola
 window.runTransition = runTransition;
+
+// Dispara automáticamente si la URL tiene ?play=1
+// Esto funciona cuando Streamlabs recarga la fuente al cambiar de escena
+if (window.location.search.indexOf('play=1') !== -1) {
+  setTimeout(runTransition, 100);
+}
 </script>
 </body>
 </html>

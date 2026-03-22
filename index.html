@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Figtree:wght@400;500;600&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -11,44 +11,98 @@
     background: transparent;
     display: flex;
     align-items: flex-end;
-    justify-content: flex-start;
+    justify-content: center;
     min-height: 100vh;
-    padding: 40px;
-    font-family: 'DM Mono', monospace;
+    padding: 28px;
+    font-family: 'Figtree', sans-serif;
   }
 
+  /* ─── WIDGET SHELL ──────────────────────────────────── */
   .widget {
-    width: 360px;
+    width: 380px;
     opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(20px) scale(0.97);
+    transition: opacity 0.5s cubic-bezier(.22,1,.36,1),
+                transform 0.5s cubic-bezier(.22,1,.36,1);
+    position: relative;
   }
 
   .widget.visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 
+  /* ─── OUTER GLOW (color dinámico via JS) ──────────── */
+  .glow-ring {
+    position: absolute;
+    inset: -1px;
+    border-radius: 19px;
+    background: var(--accent, #1DB954);
+    opacity: 0.18;
+    filter: blur(14px);
+    z-index: 0;
+    transition: background 1.2s ease, opacity 0.4s;
+  }
+  .widget:not(.playing) .glow-ring { opacity: 0.06; }
+
+  /* ─── GLASS CARD ────────────────────────────────────── */
   .inner {
-    background: rgba(8, 8, 10, 0.82);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 16px;
-    padding: 16px;
+    position: relative;
+    z-index: 1;
+    background: rgba(10, 10, 14, 1);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-top-color: rgba(255,255,255,0.18);
+    border-left-color: rgba(255,255,255,0.13);
+    border-radius: 18px;
+    padding: 14px 16px 14px 14px;
     display: flex;
-    gap: 14px;
+    gap: 13px;
     align-items: center;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    box-shadow:
+      0 2px 0 rgba(255,255,255,0.07) inset,
+      0 0 0 1px rgba(0,0,0,0.4),
+      0 16px 48px rgba(0,0,0,0.55),
+      0 4px 12px rgba(0,0,0,0.3);
+    overflow: hidden;
   }
 
+  /* Subtle noise texture overlay */
+  .inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Accent color strip at the top */
+  .inner::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent, #1DB954) 40%, transparent);
+    opacity: 0.6;
+    transition: background 1.2s ease;
+  }
+
+  /* ─── ALBUM ART ─────────────────────────────────────── */
   .art-wrap {
     flex-shrink: 0;
-    width: 64px;
-    height: 64px;
+    width: 62px;
+    height: 62px;
     border-radius: 10px;
     overflow: hidden;
-    background: #111;
+    background: #1a1a20;
+    position: relative;
+    z-index: 1;
+    box-shadow:
+      0 4px 16px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.07);
+    transition: transform 0.4s cubic-bezier(.22,1,.36,1);
   }
 
   .art-wrap img {
@@ -59,105 +113,176 @@
     transition: opacity 0.4s ease;
   }
 
-  .info { flex: 1; min-width: 0; }
+  .widget.playing .art-wrap {
+    transform: scale(1.03);
+  }
+
+  /* Vinyl inner ring detail */
+  .art-wrap .vinyl-ring {
+    display: none; /* hidden by default, enabled via class */
+  }
+
+  /* ─── INFO BLOCK ────────────────────────────────────── */
+  .info {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── STATUS ROW ────────────────────────────────────── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
 
   .label {
     font-size: 9px;
-    letter-spacing: 3px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: #1DB954;
-    margin-bottom: 5px;
-    font-weight: 500;
+    color: var(--accent, #1DB954);
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 5px;
+    font-family: 'Outfit', sans-serif;
+    transition: color 1.2s ease;
   }
 
-  .dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: #1DB954;
-    animation: pulse 1.4s ease-in-out infinite;
+  .widget:not(.playing) .label { color: rgba(255,255,255,0.28); }
+
+  /* ─── EQUALIZER BARS ────────────────────────────────── */
+  .eq {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 10px;
   }
 
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.6); opacity: 0.5; }
+  .eq-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent, #1DB954);
+    transition: background 1.2s ease;
+    transform-origin: bottom;
   }
 
-  .widget:not(.playing) .dot { animation: none; opacity: 0.3; }
-  .widget:not(.playing) .label { color: rgba(255,255,255,0.3); }
+  .eq-bar:nth-child(1) { animation: eq1 0.9s ease-in-out infinite; }
+  .eq-bar:nth-child(2) { animation: eq2 0.75s ease-in-out infinite 0.15s; }
+  .eq-bar:nth-child(3) { animation: eq3 0.85s ease-in-out infinite 0.05s; }
+  .eq-bar:nth-child(4) { animation: eq4 0.7s ease-in-out infinite 0.25s; }
+
+  @keyframes eq1 { 0%,100%{height:3px} 50%{height:10px} }
+  @keyframes eq2 { 0%,100%{height:7px} 50%{height:3px} }
+  @keyframes eq3 { 0%,100%{height:5px} 50%{height:10px} }
+  @keyframes eq4 { 0%,100%{height:9px} 50%{height:4px} }
+
+  .widget:not(.playing) .eq-bar {
+    animation: none !important;
+    height: 3px !important;
+    opacity: 0.3;
+  }
+
+  /* ─── TITLE ─────────────────────────────────────────── */
+  .title-wrap {
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent 0px, #000 8px, #000 calc(100% - 20px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0px, #000 8px, #000 calc(100% - 20px), transparent 100%);
+  }
 
   .title {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Outfit', sans-serif;
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 700;
     color: #fff;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-    letter-spacing: -0.3px;
+    line-height: 1.25;
+    letter-spacing: -0.2px;
+    display: inline-block;
+  }
+
+  .title.scrolling {
+    animation: marquee 10s linear infinite;
+    padding-right: 60px;
+  }
+
+  @keyframes marquee {
+    0%    { transform: translateX(0); }
+    15%   { transform: translateX(0); }
+    85%   { transform: translateX(var(--scroll-dist, -40px)); }
+    100%  { transform: translateX(var(--scroll-dist, -40px)); }
   }
 
   .artist {
-    font-size: 11px;
-    color: rgba(255,255,255,0.45);
+    font-size: 12px;
+    color: rgba(255,255,255,0.42);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-top: 3px;
+    margin-top: 2px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
   }
 
+  /* ─── PROGRESS ──────────────────────────────────────── */
   .progress-row {
     display: flex;
     align-items: center;
     gap: 7px;
-    margin-top: 10px;
+    margin-top: 9px;
   }
 
   .time {
-    font-size: 9px;
-    color: rgba(255,255,255,0.3);
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.25);
     flex-shrink: 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    font-family: 'Outfit', monospace;
+    font-variant-numeric: tabular-nums;
   }
 
   .bar {
     flex: 1;
     height: 3px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
   }
 
   .fill {
     height: 100%;
     width: 0%;
-    background: #1DB954;
+    background: linear-gradient(90deg, var(--accent, #1DB954), color-mix(in srgb, var(--accent, #1DB954) 70%, #fff));
     border-radius: 10px;
     transition: width 1s linear;
     position: relative;
   }
 
+  /* Glowing thumb dot */
   .fill::after {
     content: '';
     position: absolute;
-    right: 0;
+    right: -3px;
     top: 50%;
     transform: translateY(-50%);
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 0 6px rgba(29,185,84,0.8);
+    box-shadow:
+      0 0 0 2px rgba(255,255,255,0.15),
+      0 0 8px var(--accent, #1DB954),
+      0 0 16px var(--accent, #1DB954);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, box-shadow 1.2s ease;
   }
 
   .widget.playing .fill::after { opacity: 1; }
 
+  /* ─── LOGIN SCREEN ──────────────────────────────────── */
   #login-screen {
     position: fixed;
     inset: 0;
@@ -167,22 +292,25 @@
   }
 
   #login-screen button {
-    font-family: 'DM Mono', monospace;
+    font-family: 'Outfit', sans-serif;
     background: #1DB954;
     color: #000;
     border: none;
-    padding: 14px 32px;
+    padding: 14px 34px;
     border-radius: 50px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    letter-spacing: 1px;
-    transition: transform 0.15s, background 0.15s;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: transform 0.15s, background 0.15s, box-shadow 0.2s;
+    box-shadow: 0 0 24px rgba(29,185,84,0.4);
   }
 
   #login-screen button:hover {
     background: #1ed760;
-    transform: scale(1.04);
+    transform: scale(1.05);
+    box-shadow: 0 0 36px rgba(29,185,84,0.6);
   }
 </style>
 </head>
@@ -193,13 +321,26 @@
 </div>
 
 <div class="widget" id="widget">
+  <div class="glow-ring" id="glowRing"></div>
   <div class="inner">
     <div class="art-wrap">
       <img id="art" src="" alt="">
     </div>
     <div class="info">
-      <div class="label"><span class="dot"></span><span id="status">SONANDO</span></div>
-      <div class="title" id="title">—</div>
+      <div class="status-row">
+        <div class="label">
+          <div class="eq">
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+          </div>
+          <span id="status">SONANDO</span>
+        </div>
+      </div>
+      <div class="title-wrap">
+        <div class="title" id="title">—</div>
+      </div>
       <div class="artist" id="artist">—</div>
       <div class="progress-row">
         <span class="time" id="elapsed">0:00</span>
@@ -212,10 +353,9 @@
 
 <script>
 const CLIENT_ID    = 'e19133bd7acf486d8d4adc5254f18509';
-const REDIRECT_URI = 'http://127.0.0.1:8888';
+const REDIRECT_URI = 'https://clever-starlight-9ac4cb.netlify.app';
 const SCOPES       = 'user-read-currently-playing user-read-playback-state';
 
-// ── PKCE ────────────────────────────────────────────────
 function randomString(len) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   let s = '';
@@ -224,8 +364,7 @@ function randomString(len) {
 }
 
 async function sha256(plain) {
-  const enc = new TextEncoder().encode(plain);
-  return crypto.subtle.digest('SHA-256', enc);
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain));
 }
 
 function base64url(buf) {
@@ -239,11 +378,10 @@ async function generatePKCE() {
   return { verifier, challenge };
 }
 
-// ── Auth ─────────────────────────────────────────────────
 async function login() {
   const { verifier, challenge } = await generatePKCE();
   localStorage.setItem('pkce_verifier', verifier);
-  const url = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
+  window.location.href = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
     client_id:             CLIENT_ID,
     response_type:         'code',
     redirect_uri:          REDIRECT_URI,
@@ -251,7 +389,6 @@ async function login() {
     code_challenge_method: 'S256',
     code_challenge:        challenge,
   });
-  window.location.href = url;
 }
 
 async function exchangeCode(code) {
@@ -291,7 +428,7 @@ function isExpired() {
   return Date.now() > (parseInt(localStorage.getItem('sp_exp')) || 0) - 60000;
 }
 
-// ── UI ───────────────────────────────────────────────────
+// ─── DOM refs ───────────────────────────────────────────
 const widget    = document.getElementById('widget');
 const titleEl   = document.getElementById('title');
 const artistEl  = document.getElementById('artist');
@@ -300,10 +437,59 @@ const fillEl    = document.getElementById('fill');
 const elapsedEl = document.getElementById('elapsed');
 const durEl     = document.getElementById('duration');
 const statusEl  = document.getElementById('status');
+const glowRing  = document.getElementById('glowRing');
 
 function fmt(ms) {
   const s = Math.floor(ms / 1000);
   return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+// ─── Dynamic color from album art ───────────────────────
+function extractDominantColor(imgEl) {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 24;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0, 24, 24);
+    const d = ctx.getImageData(0, 0, 24, 24).data;
+    let r = 0, g = 0, b = 0, count = 0;
+    for (let i = 0; i < d.length; i += 4 * 3) {
+      // Skip very dark or very bright pixels for better accent color
+      const brightness = (d[i] + d[i+1] + d[i+2]) / 3;
+      if (brightness < 30 || brightness > 220) continue;
+      r += d[i]; g += d[i+1]; b += d[i+2]; count++;
+    }
+    if (count === 0) return null;
+    r = Math.round(r / count);
+    g = Math.round(g / count);
+    b = Math.round(b / count);
+    // Boost saturation
+    const max = Math.max(r,g,b), min = Math.min(r,g,b);
+    const boost = 1.4;
+    const mid = (max + min) / 2;
+    r = Math.min(255, Math.round(mid + (r - mid) * boost));
+    g = Math.min(255, Math.round(mid + (g - mid) * boost));
+    b = Math.min(255, Math.round(mid + (b - mid) * boost));
+    return `rgb(${r},${g},${b})`;
+  } catch(e) { return null; }
+}
+
+function applyAccent(color) {
+  const c = color || '#1DB954';
+  document.documentElement.style.setProperty('--accent', c);
+  widget.style.setProperty('--accent', c);
+}
+
+// ─── Marquee scroll check ────────────────────────────────
+function checkMarquee() {
+  const wrap = titleEl.parentElement;
+  titleEl.classList.remove('scrolling');
+  void titleEl.offsetWidth; // reflow
+  if (titleEl.scrollWidth > wrap.clientWidth + 4) {
+    const dist = -(titleEl.scrollWidth - wrap.clientWidth + 24);
+    titleEl.style.setProperty('--scroll-dist', dist + 'px');
+    titleEl.classList.add('scrolling');
+  }
 }
 
 let lastId = null;
@@ -317,10 +503,8 @@ async function fetchNow() {
     });
   } catch(e) { return; }
 
-  if (r.status === 204 || r.status === 401) {
-    widget.classList.remove('visible', 'playing');
-    return;
-  }
+  if (r.status === 204) { widget.classList.remove('visible', 'playing'); return; }
+  if (r.status === 401) { await doRefresh(); return; }
 
   const data = await r.json();
   if (!data || !data.item) { widget.classList.remove('visible', 'playing'); return; }
@@ -340,14 +524,27 @@ async function fetchNow() {
   widget.classList.add('visible');
   widget.classList.toggle('playing', playing);
 
+  checkMarquee();
+
   if (track.id !== lastId) {
     lastId = track.id;
     const img = track.album.images[1] || track.album.images[0];
-    if (img) artEl.src = img.url;
+    if (img) {
+      // Crossfade art
+      artEl.style.opacity = '0';
+      artEl.src = img.url;
+      artEl.onload = () => {
+        artEl.style.opacity = '1';
+        // Extract color after load
+        setTimeout(() => {
+          const color = extractDominantColor(artEl);
+          if (color) applyAccent(color);
+        }, 50);
+      };
+    }
   }
 }
 
-// ── Init ─────────────────────────────────────────────────
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const code   = params.get('code');
